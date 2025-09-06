@@ -1,0 +1,22 @@
+-- Teleport theo thứ tự checkpoint 1 lần
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+-- danh sách checkpoint theo thứ tự
+local checkpoints = {
+    "Checkpoint1",
+    "Checkpoint2",
+    "Checkpoint3",
+    "Checkpoint4"
+}
+
+for i, name in ipairs(checkpoints) do
+    local target = workspace:FindFirstChild(name, true)
+    if target and target:IsA("BasePart") then
+        hrp.CFrame = target.CFrame + Vector3.new(0, 3, 0)
+        task.wait(2) -- thời gian đứng ở mỗi checkpoint
+    else
+        warn("Không tìm thấy:", name)
+    end
+end
