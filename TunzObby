@@ -1,22 +1,32 @@
--- Teleport theo thứ tự checkpoint 1 lần
+-- Tele lần lượt qua tất cả checkpoint trong game
+-- Tự động tìm checkpoint có chữ "Checkpoint" trong tên
+-- Chạy bằng Delta Executor
+
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
 
--- danh sách checkpoint theo thứ tự
-local checkpoints = {
-    "Checkpoint1",
-    "Checkpoint2",
-    "Checkpoint3",
-    "Checkpoint4"
-}
+-- lấy toàn bộ checkpoint
+local checkpoints = {}
+for _, obj in ipairs(workspace:GetDescendants()) do
+    if obj:IsA("BasePart") and string.find(obj.Name:lower(), "checkpoint") then
+        table.insert(checkpoints, obj)
+    end
+end
 
-for i, name in ipairs(checkpoints) do
-    local target = workspace:FindFirstChild(name, true)
-    if target and target:IsA("BasePart") then
-        hrp.CFrame = target.CFrame + Vector3.new(0, 3, 0)
-        task.wait(2) -- thời gian đứng ở mỗi checkpoint
-    else
-        warn("Không tìm thấy:", name)
+-- sắp xếp checkpoint theo số trong tên (Checkpoint1, Checkpoint2, ...)
+table.sort(checkpoints, function(a, b)
+    local numA = tonumber(a.Name:match("%d+")) or math.huge
+    local numB = tonumber(b.Name:match("%d+")) or math.huge
+    return numA < numB
+end)
+
+-- tele lần lượt
+while true do
+    for i, cp in ipairs(checkpoints) do
+        if cp and cp:IsA("BasePart") then
+            hrp.CFrame = cp.CFrame + Vector3.new(0, 3, 0)
+            task.wait(2) -- đổi 2 thành thời gian bạn muốn chờ giữa các lần tele
+        end
     end
 end
