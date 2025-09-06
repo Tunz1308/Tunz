@@ -1,32 +1,49 @@
--- Tele lần lượt qua tất cả checkpoint trong game
--- Tự động tìm checkpoint có chữ "Checkpoint" trong tên
--- Chạy bằng Delta Executor
-
+-- Tele lần lượt qua checkpoint (fix: chỉ tele đến vị trí hợp lệ)
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
 local hrp = char:WaitForChild("HumanoidRootPart")
 
--- lấy toàn bộ checkpoint
+-- hàm lấy vị trí hợp lệ từ checkpoint
+local function getPositionFromCheckpoint(obj)
+    if obj:IsA("BasePart") then
+        return obj.Position
+    elseif obj:IsA("Model") then
+        if obj.PrimaryPart then
+            return obj.PrimaryPart.Position
+        else
+            local part = obj:FindFirstChildWhichIsA("BasePart")
+            if part then
+                return part.Position
+            end
+        end
+    end
+    return nil
+end
+
+-- tìm toàn bộ checkpoint
 local checkpoints = {}
 for _, obj in ipairs(workspace:GetDescendants()) do
-    if obj:IsA("BasePart") and string.find(obj.Name:lower(), "checkpoint") then
-        table.insert(checkpoints, obj)
+    if string.find(obj.Name:lower(), "checkpoint") then
+        local pos = getPositionFromCheckpoint(obj)
+        if pos then
+            table.insert(checkpoints, {obj=obj, pos=pos})
+        end
     end
 end
 
--- sắp xếp checkpoint theo số trong tên (Checkpoint1, Checkpoint2, ...)
+-- sắp xếp theo số (Checkpoint1, Checkpoint2, ...)
 table.sort(checkpoints, function(a, b)
-    local numA = tonumber(a.Name:match("%d+")) or math.huge
-    local numB = tonumber(b.Name:match("%d+")) or math.huge
+    local numA = tonumber(a.obj.Name:match("%d+")) or math.huge
+    local numB = tonumber(b.obj.Name:match("%d+")) or math.huge
     return numA < numB
 end)
 
 -- tele lần lượt
 while true do
-    for i, cp in ipairs(checkpoints) do
-        if cp and cp:IsA("BasePart") then
-            hrp.CFrame = cp.CFrame + Vector3.new(0, 3, 0)
-            task.wait(2) -- đổi 2 thành thời gian bạn muốn chờ giữa các lần tele
+    for _, cp in ipairs(checkpoints) do
+        if cp.pos then
+            hrp.CFrame = CFrame.new(cp.pos + Vector3.new(0, 3, 0))
+            task.wait(2) -- chỉnh thời gian delay giữa mỗi lần tele
         end
     end
 end
